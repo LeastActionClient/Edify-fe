@@ -24,12 +24,24 @@ const AcademicYearPage = lazy(() => import('./pages/AcademicYear'));
 const Concessions = lazy(() => import('./pages/Concessions'));
 const IdCards = lazy(() => import('./pages/IdCards'));
 const PaymentHistory = lazy(() => import('./pages/PaymentHistory'));
+const Accounts = lazy(() => import('./pages/Accounts'));
 
 const ProtectedRoute = ({ children }) => {
-
   const token = sessionStorage.getItem('token');
   if (!token) {
     return <Navigate to="/" replace />;
+  }
+  return children;
+};
+
+const SuperAdminRoute = ({ children }) => {
+  const token = sessionStorage.getItem('token');
+  if (!token) {
+    return <Navigate to="/" replace />;
+  }
+  const user = JSON.parse(sessionStorage.getItem('user') || localStorage.getItem('user') || '{}');
+  if (user.role !== 'SUPER_ADMIN') {
+    return <Navigate to="/dashboard" replace />;
   }
   return children;
 };
@@ -67,6 +79,14 @@ const App = () => {
           <Route path="print-export" element={<PrintExport />} />
           <Route path="id-cards" element={<IdCards />} />
           <Route path="concessions" element={<Concessions />} />
+          <Route
+            path="accounts"
+            element={
+              <SuperAdminRoute>
+                <Accounts />
+              </SuperAdminRoute>
+            }
+          />
         </Route>
       </Routes>
     </Suspense>
