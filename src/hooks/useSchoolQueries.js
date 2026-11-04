@@ -14,6 +14,7 @@ export const schoolQueryKeys = {
   studentNetFees: (id) => ['students', id, 'net-fees'],
   payments: ['payments'],
   paymentInvoice: (id) => ['payments', id, 'invoice'],
+  studentPaymentHistory: (id, year) => ['payments', 'student-history', id, year || 'all'],
   applications: ['applications'],
   application: (id) => ['applications', id],
   classes: ['classes'],
@@ -71,6 +72,14 @@ export const usePaymentsQuery = () =>
   useQuery({
     queryKey: schoolQueryKeys.payments,
     queryFn: () => fetchJson('/payments'),
+    placeholderData: (previous) => previous,
+  });
+
+export const useStudentPaymentHistoryQuery = (studentId, academicYear, enabled = true) =>
+  useQuery({
+    queryKey: schoolQueryKeys.studentPaymentHistory(studentId, academicYear),
+    queryFn: () => fetchJson(`/payments/student-history/${studentId}${academicYear ? `?academicYear=${encodeURIComponent(academicYear)}` : ''}`),
+    enabled: Boolean(studentId) && enabled,
     placeholderData: (previous) => previous,
   });
 

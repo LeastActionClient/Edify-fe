@@ -115,7 +115,7 @@ const Payments = () => {
     return { isTerm: true, baseCategory: baseCategory.toLowerCase(), termNumber };
   };
 
-  const getTermLockInfo = (fee, allFees, selectedIds, amountsMap) => {
+  const getTermLockInfo = (fee, allFees, selectedIds, amountsMap, strict = false) => {
     if (!fee) return { isLocked: false, message: '' };
     const catName = fee.feeCategory?.name || fee.feeCategoryId?.name || '';
     const termInfo = parseTermInfo(catName);
@@ -154,9 +154,11 @@ const Payments = () => {
         : Math.max(0, (prevFee.totalAmount || 0) - (prevFee.concessionStatus === 'Active' ? (prevFee.lessAmount || 0) : 0) - (prevFee.paidAmount || 0));
 
       const isCheckedInModal = selectedIds.includes(prevFeeId);
-      const payingVal = parseFloat(amountsMap[prevFeeId]) || 0;
+      const rawPayingVal = amountsMap ? amountsMap[prevFeeId] : undefined;
+      const payingVal = parseFloat(rawPayingVal) || 0;
 
-      const isFullyPaid = dynamicRemaining === 0 || (isCheckedInModal && payingVal >= dynamicRemaining && dynamicRemaining > 0);
+      const isPendingEntry = !strict && isCheckedInModal && (rawPayingVal === '' || rawPayingVal === undefined);
+      const isFullyPaid = dynamicRemaining === 0 || (isCheckedInModal && (payingVal >= dynamicRemaining || isPendingEntry) && dynamicRemaining > 0);
 
       if (!isFullyPaid) {
         const otherCatName = String(prevFee.feeCategory?.name || prevFee.feeCategoryId?.name || '').toLowerCase();
@@ -295,7 +297,7 @@ const Payments = () => {
         const initialAmounts = {};
         pendingFees.forEach(f => {
           const dynamicRemaining = f.remainingAmount !== undefined ? f.remainingAmount : Math.max(0, (f.totalAmount || 0) - (f.concessionStatus === 'Active' ? (f.lessAmount || 0) : 0) - (f.paidAmount || 0));
-          initialAmounts[f._id || f.id] = dynamicRemaining.toString();
+          initialAmounts[f._id || f.id] = '';
         });
         setPayingAmounts(initialAmounts);
 
@@ -366,7 +368,7 @@ const Payments = () => {
 
     for (const id of paymentData.studentFeeIds) {
       const fee = studentFees.find(sf => (sf._id || sf.id) === id);
-      const lockInfo = getTermLockInfo(fee, studentFees, paymentData.studentFeeIds, payingAmounts);
+      const lockInfo = getTermLockInfo(fee, studentFees, paymentData.studentFeeIds, payingAmounts, true);
       if (lockInfo.isLocked) {
         toastWarning(lockInfo.message || "Please complete prerequisite payments first.");
         return;
@@ -998,15 +1000,18 @@ const Payments = () => {
                       className="h-4 w-4 mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-600 cursor-pointer disabled:cursor-not-allowed"
                       onChange={(e) => {
                         let candidateIds;
+                        let newAmounts = { ...payingAmounts };
                         if (e.target.checked) {
                           candidateIds = [...paymentData.studentFeeIds, feeId];
                         } else {
                           candidateIds = paymentData.studentFeeIds.filter(id => id !== feeId);
+                          newAmounts[feeId] = '';
                         }
                         
-                        const validIds = filterUnlockedIds(candidateIds, payingAmounts);
+                        setPayingAmounts(newAmounts);
+                        const validIds = filterUnlockedIds(candidateIds, newAmounts);
                         const newTotal = validIds.reduce((sum, id) => {
-                          const val = payingAmounts[id] ?? '0';
+                          const val = newAmounts[id] ?? '0';
                           return sum + (parseFloat(val) || 0);
                         }, 0);
                         
@@ -1049,6 +1054,7 @@ const Payments = () => {
                         <Label htmlFor={`paying-${feeId}`} className="text-xs font-bold text-gray-700">Amount Paying Now (Rs.)</Label>
                         <Input
                           id={`paying-${feeId}`}
+                          placeholder="Enter amount"
                           type="text"
                           value={payingVal}
                           onChange={(e) => {

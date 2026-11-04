@@ -23,6 +23,7 @@ const PendingFees = lazy(() => import('./pages/PendingFees'));
 const AcademicYearPage = lazy(() => import('./pages/AcademicYear'));
 const Concessions = lazy(() => import('./pages/Concessions'));
 const IdCards = lazy(() => import('./pages/IdCards'));
+const PaymentHistory = lazy(() => import('./pages/PaymentHistory'));
 
 const ProtectedRoute = ({ children }) => {
 
@@ -59,6 +60,7 @@ const App = () => {
           <Route path="fee-categories/activities" element={<Activities />} />
           <Route path="payments" element={<Payments />} />
           <Route path="payments/invoice/:id" element={<InvoiceGenerated />} />
+          <Route path="payment-history" element={<PaymentHistory />} />
           <Route path="reports" element={<Reports />} />
           <Route path="admins" element={<Admins />} />
           <Route path="teachers" element={<Teachers />} />
