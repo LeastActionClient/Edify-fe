@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { 
@@ -20,7 +20,8 @@ import {
   RefreshCw,
   ExternalLink,
   ShieldAlert,
-  Loader2
+  Loader2,
+  X
 } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
@@ -58,6 +59,11 @@ const formatDate = (dateString) => {
 const PaymentHistory = () => {
   const navigate = useNavigate();
 
+  // Search input dropdown reference & state
+  const searchContainerRef = useRef(null);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+
   // Filter selections
   const [selectedAcademicYear, setSelectedAcademicYear] = useState('');
   const [selectedClass, setSelectedClass] = useState('');
@@ -74,6 +80,17 @@ const PaymentHistory = () => {
   const { data: activeYearData } = useActiveAcademicYearQuery();
   const { data: classes = [], isLoading: loadingClasses } = useClassesQuery();
   const { data: students = [], isLoading: loadingStudents } = useStudentsQuery();
+
+  // Close search dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
+        setIsSearchOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Set default academic year on initial load
   useEffect(() => {
@@ -107,7 +124,75 @@ const PaymentHistory = () => {
   const normClass = (str) => String(str || '').replace(/^class\s*/i, '').trim().toLowerCase();
   const normSec = (str) => String(str || '').trim().toLowerCase();
 
-  // Filter students based on Class, Section and optional search query
+  // The active selected student object
+  const selectedStudent = useMemo(() => {
+    if (!selectedStudentId) return null;
+    return students.find((s) => (s._id || s.id) === selectedStudentId) || null;
+  }, [students, selectedStudentId]);
+
+  // Smart multi-field search results across all students for the top search input
+  const searchResults = useMemo(() => {
+    const q = studentSearchQuery.trim().toLowerCase();
+    if (!q) return [];
+
+    const cleanQ = q.replace(/[^a-z0-9]/g, '');
+    const terms = q.split(/\s+/).filter(Boolean);
+
+    const matches = students.filter((s) => {
+      const name = String(s.studentName || '').toLowerCase();
+      const adm = String(s.admissionNumber || '').toLowerCase();
+      const cleanAdm = adm.replace(/[^a-z0-9]/g, '');
+      const roll = String(s.rollNumber || '').toLowerCase();
+      const father = String(s.fatherName || '').toLowerCase();
+
+      // Check if admission number matches directly or alphanumeric-cleaned
+      if (adm.includes(q) || (cleanQ && cleanAdm.includes(cleanQ))) return true;
+
+      // Check all query terms across name, adm, roll, father
+      return terms.every((term) =>
+        name.includes(term) ||
+        adm.includes(term) ||
+        roll.includes(term) ||
+        father.includes(term)
+      );
+    });
+
+    // Score and sort results by relevance
+    return matches.sort((a, b) => {
+      const aName = String(a.studentName || '').toLowerCase();
+      const bName = String(b.studentName || '').toLowerCase();
+      const aAdm = String(a.admissionNumber || '').toLowerCase();
+      const bAdm = String(b.admissionNumber || '').toLowerCase();
+
+      // 1. Exact match on admission number
+      if (aAdm === q && bAdm !== q) return -1;
+      if (bAdm === q && aAdm !== q) return 1;
+
+      // 2. Admission number starts with query
+      if (aAdm.startsWith(q) && !bAdm.startsWith(q)) return -1;
+      if (bAdm.startsWith(q) && !aAdm.startsWith(q)) return 1;
+
+      // 3. Exact match on student name
+      if (aName === q && bName !== q) return -1;
+      if (bName === q && aName !== q) return 1;
+
+      // 4. Student name starts with query
+      if (aName.startsWith(q) && !bName.startsWith(q)) return -1;
+      if (bName.startsWith(q) && !aName.startsWith(q)) return 1;
+
+      // 5. Prioritize current class if selected
+      if (selectedClass) {
+        const aSameClass = normClass(a.currentClass) === normClass(selectedClass);
+        const bSameClass = normClass(b.currentClass) === normClass(selectedClass);
+        if (aSameClass && !bSameClass) return -1;
+        if (!aSameClass && bSameClass) return 1;
+      }
+
+      return aName.localeCompare(bName);
+    }).slice(0, 20);
+  }, [students, studentSearchQuery, selectedClass]);
+
+  // Filter students for Dropdown #4 based on Class & Section
   const filteredStudents = useMemo(() => {
     let list = students;
     if (selectedClass) {
@@ -116,30 +201,112 @@ const PaymentHistory = () => {
     if (selectedSection) {
       list = list.filter((student) => normSec(student.section) === normSec(selectedSection));
     }
-    if (studentSearchQuery.trim()) {
-      const q = studentSearchQuery.trim().toLowerCase();
-      list = list.filter((s) => {
-        const name = String(s.studentName || '').toLowerCase();
-        const adm = String(s.admissionNumber || '').toLowerCase();
-        return name.includes(q) || adm.includes(q);
-      });
+    // Make sure the currently selected student is always present in dropdown options
+    if (selectedStudent && !list.some((s) => (s._id || s.id) === (selectedStudent._id || selectedStudent.id))) {
+      list = [selectedStudent, ...list];
     }
     return list;
-  }, [students, selectedClass, selectedSection, studentSearchQuery]);
+  }, [students, selectedClass, selectedSection, selectedStudent]);
 
-  // When a student is picked from dropdown, sync their class & section if not yet selected
+  // Full selection of a student object (updates dropdowns, query, and loads history)
+  const handleSelectStudentObject = (student) => {
+    if (!student) return;
+    const studentId = student._id || student.id;
+    setSelectedStudentId(studentId);
+    if (student.currentClass) {
+      setSelectedClass(student.currentClass);
+    }
+    if (student.section) {
+      setSelectedSection(student.section);
+    } else {
+      setSelectedSection('');
+    }
+    setStudentSearchQuery(`${student.studentName} (${student.admissionNumber})`);
+    setIsSearchOpen(false);
+    setHighlightedIndex(-1);
+  };
+
+  // When a student is picked from dropdown #4
   const handleStudentSelect = (studentId) => {
     setSelectedStudentId(studentId);
     if (studentId) {
       const student = students.find((s) => (s._id || s.id) === studentId);
       if (student) {
-        if (student.currentClass && !selectedClass) {
+        if (student.currentClass) {
           setSelectedClass(student.currentClass);
         }
-        if (student.section && !selectedSection) {
+        if (student.section) {
           setSelectedSection(student.section);
+        } else {
+          setSelectedSection('');
         }
+        setStudentSearchQuery(`${student.studentName} (${student.admissionNumber})`);
       }
+    } else {
+      setStudentSearchQuery('');
+    }
+    setIsSearchOpen(false);
+  };
+
+  // Keyboard navigation inside search input
+  const handleSearchKeyDown = (e) => {
+    if (!isSearchOpen && (e.key === 'ArrowDown' || e.key === 'Enter')) {
+      if (studentSearchQuery.trim()) {
+        setIsSearchOpen(true);
+      }
+    }
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (searchResults.length > 0) {
+        setHighlightedIndex((prev) => 
+          prev < searchResults.length - 1 ? prev + 1 : 0
+        );
+      }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (searchResults.length > 0) {
+        setHighlightedIndex((prev) => 
+          prev > 0 ? prev - 1 : searchResults.length - 1
+        );
+      }
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (searchResults.length > 0) {
+        const target = (highlightedIndex >= 0 && searchResults[highlightedIndex])
+          ? searchResults[highlightedIndex]
+          : searchResults[0];
+        handleSelectStudentObject(target);
+      }
+    } else if (e.key === 'Escape') {
+      setIsSearchOpen(false);
+    }
+  };
+
+  // Clear search input & selection
+  const handleClearSearch = () => {
+    setStudentSearchQuery('');
+    setSelectedStudentId('');
+    setIsSearchOpen(false);
+    setHighlightedIndex(-1);
+  };
+
+  // Change class filter
+  const handleClassChange = (newClass) => {
+    setSelectedClass(newClass);
+    setSelectedSection('');
+    if (selectedStudent && newClass && normClass(selectedStudent.currentClass) !== normClass(newClass)) {
+      setSelectedStudentId('');
+      setStudentSearchQuery('');
+    }
+  };
+
+  // Change section filter
+  const handleSectionChange = (newSec) => {
+    setSelectedSection(newSec);
+    if (selectedStudent && newSec && normSec(selectedStudent.section) !== normSec(newSec)) {
+      setSelectedStudentId('');
+      setStudentSearchQuery('');
     }
   };
 
@@ -385,27 +552,110 @@ const PaymentHistory = () => {
 
       {/* 1. Student Selection Bar (Academic Year -> Class -> Section -> Student) */}
       <Card className="border-blue-100 shadow-sm bg-white">
-        <CardHeader className="py-3 px-5 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <CardHeader className="py-3.5 px-5 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <CardTitle className="text-base font-semibold text-gray-800 flex items-center gap-2">
-            <Search className="h-4 w-4 text-blue-600" />
+            <Search className="h-4.5 w-4.5 text-blue-600" />
             Student Selection
           </CardTitle>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <input
-              type="text"
-              placeholder="Search student or adm no..."
-              value={studentSearchQuery}
-              onChange={(e) => setStudentSearchQuery(e.target.value)}
-              className="text-xs h-8 px-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-600 w-full sm:w-60 bg-white"
-            />
-            {studentSearchQuery && (
-              <button
-                type="button"
-                onClick={() => setStudentSearchQuery('')}
-                className="text-xs text-gray-500 hover:text-gray-800"
-              >
-                Clear
-              </button>
+
+          {/* Top Search Input with Autocomplete Dropdown */}
+          <div className="relative w-full sm:w-80" ref={searchContainerRef}>
+            <div className="relative flex items-center">
+              <Search className="absolute left-3 h-4 w-4 text-gray-400 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search student name or adm no..."
+                value={studentSearchQuery}
+                onChange={(e) => {
+                  setStudentSearchQuery(e.target.value);
+                  setIsSearchOpen(true);
+                  setHighlightedIndex(0);
+                }}
+                onFocus={() => {
+                  if (studentSearchQuery.trim()) {
+                    setIsSearchOpen(true);
+                  }
+                }}
+                onKeyDown={handleSearchKeyDown}
+                className="text-xs h-9 pl-9 pr-8 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 w-full bg-white shadow-2xs font-medium text-gray-800 placeholder-gray-400"
+              />
+              {studentSearchQuery && (
+                <button
+                  type="button"
+                  onClick={handleClearSearch}
+                  className="absolute right-2 p-1 text-gray-400 hover:text-gray-700 rounded-full hover:bg-gray-100 transition-colors"
+                  title="Clear search"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Suggestions Dropdown */}
+            {isSearchOpen && studentSearchQuery.trim() && (
+              <div className="absolute right-0 left-0 sm:left-auto sm:w-96 top-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden">
+                <div className="px-3 py-2 bg-gray-50 border-b border-gray-100 flex items-center justify-between text-[11px] font-semibold text-gray-500">
+                  <span>
+                    {searchResults.length > 0 
+                      ? `Found ${searchResults.length} matching student${searchResults.length > 1 ? 's' : ''}`
+                      : 'No matches'}
+                  </span>
+                  {searchResults.length > 0 && (
+                    <span className="text-[10px] text-gray-400">Press Enter ↵ to select</span>
+                  )}
+                </div>
+
+                <div className="max-h-72 overflow-y-auto divide-y divide-gray-100">
+                  {searchResults.length > 0 ? (
+                    searchResults.map((s, idx) => {
+                      const isHighlighted = idx === highlightedIndex;
+                      const isCurrentlySelected = (s._id || s.id) === selectedStudentId;
+
+                      return (
+                        <div
+                          key={s._id || s.id}
+                          onClick={() => handleSelectStudentObject(s)}
+                          onMouseEnter={() => setHighlightedIndex(idx)}
+                          className={`p-3 cursor-pointer transition-colors text-left flex items-center justify-between gap-3 ${
+                            isHighlighted ? 'bg-blue-50 text-blue-900' : 'hover:bg-gray-50 text-gray-800'
+                          } ${isCurrentlySelected ? 'border-l-4 border-blue-600 font-semibold' : ''}`}
+                        >
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-bold text-sm text-gray-900 truncate">
+                                {s.studentName}
+                              </span>
+                              <span className="font-mono text-[11px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">
+                                {s.admissionNumber}
+                              </span>
+                            </div>
+                            <div className="text-xs text-gray-500 mt-0.5 flex items-center gap-2">
+                              <span>Class: {s.currentClass || '-'}{s.section ? ` (${s.section})` : ''}</span>
+                              {s.fatherName && (
+                                <>
+                                  <span>•</span>
+                                  <span className="truncate">S/O {s.fatherName}</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          <div className="shrink-0 text-blue-600 text-xs font-semibold">
+                            Select →
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="p-6 text-center text-xs text-gray-500">
+                      <Search className="h-6 w-6 text-gray-400 mx-auto mb-2" />
+                      <p className="font-semibold text-gray-700">No students found</p>
+                      <p className="mt-0.5 text-gray-400">
+                        No matches for "{studentSearchQuery}". Try student name or admission number.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
           </div>
         </CardHeader>
@@ -419,10 +669,7 @@ const PaymentHistory = () => {
               <select
                 id="academicYearFilter"
                 value={selectedAcademicYear}
-                onChange={(e) => {
-                  setSelectedAcademicYear(e.target.value);
-                  setSelectedStudentId('');
-                }}
+                onChange={(e) => setSelectedAcademicYear(e.target.value)}
                 className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
                 disabled={loadingYears}
               >
@@ -443,11 +690,7 @@ const PaymentHistory = () => {
               <select
                 id="classFilter"
                 value={selectedClass}
-                onChange={(e) => {
-                  setSelectedClass(e.target.value);
-                  setSelectedSection('');
-                  setSelectedStudentId('');
-                }}
+                onChange={(e) => handleClassChange(e.target.value)}
                 className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
                 disabled={loadingClasses}
               >
@@ -468,10 +711,7 @@ const PaymentHistory = () => {
               <select
                 id="sectionFilter"
                 value={selectedSection}
-                onChange={(e) => {
-                  setSelectedSection(e.target.value);
-                  setSelectedStudentId('');
-                }}
+                onChange={(e) => handleSectionChange(e.target.value)}
                 disabled={!selectedClass || availableSections.length === 0}
                 className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 disabled:bg-gray-100 disabled:text-gray-400"
               >
@@ -500,12 +740,12 @@ const PaymentHistory = () => {
                   {loadingStudents
                     ? '-- Loading students... --'
                     : filteredStudents.length === 0
-                    ? (selectedClass ? '-- No students in this Class/Section --' : '-- Select Class first --')
+                    ? (selectedClass ? '-- No students in this Class/Section --' : '-- No students found --')
                     : `-- Select Student (${filteredStudents.length}) --`}
                 </option>
                 {filteredStudents.map((s) => (
                   <option key={s._id || s.id} value={s._id || s.id}>
-                    {s.admissionNumber} - {s.studentName} {s.section ? `(Sec ${s.section})` : ''}
+                    {s.admissionNumber} - {s.studentName} {selectedClass ? (s.section ? `(Sec ${s.section})` : '') : `(Class ${s.currentClass}${s.section ? ` - Sec ${s.section}` : ''})`}
                   </option>
                 ))}
               </select>
