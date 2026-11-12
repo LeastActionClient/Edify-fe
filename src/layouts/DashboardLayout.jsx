@@ -5,7 +5,7 @@ import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { Home, Users, FileText, UserPlus, IndianRupee, FileCheck, PieChart, LogOut, Printer, Menu, X, Calendar, Percent, Contact, GraduationCap, Package, History, Wallet} from 'lucide-react';
 
 
-import logo from '../assets/logo.png';
+import logo from '../assets/edify logo.jpeg';
 
 const DashboardLayout = () => {
   const navigate = useNavigate();
@@ -97,7 +97,7 @@ const DashboardLayout = () => {
             <X size={24} />
           </button>
           <div className="flex justify-center mb-4">
-            <img src={logo} alt="Logo" className="h-24 w-auto object-contain" />
+            <img src={logo} alt="Edify Logo" className="h-24 w-auto object-contain" />
           </div>
           <p className="text-sm text-gray-500 mt-1 text-center">Logged in as {user.username}</p>
         </div>

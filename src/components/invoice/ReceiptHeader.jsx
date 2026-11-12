@@ -10,7 +10,7 @@ const ReceiptHeader = memo(({ headerTitle }) => {
         <div className="flex items-center gap-2">
           <img
             src="/KSlogo.jpg"
-            alt="Lotus Nursery and Primary School logo"
+            alt="Edify Logo"
             className="h-[14.5mm] w-auto object-contain object-left"
           />
           <div className="flex flex-col justify-center min-w-0 pr-2">

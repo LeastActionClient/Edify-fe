@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { Eye, EyeOff } from 'lucide-react';
-import logo from '../assets/logo.png';
+import logo from '../assets/edify logo.jpeg';
 import { Button } from '../components/ui/Button';
 
 const Login = () => {
@@ -66,7 +66,7 @@ const Login = () => {
         <div className="w-full max-w-md">
         <div className="flex flex-col items-center justify-center mb-8">
           <div className="flex items-center justify-center mb-2">
-            <img src={logo} alt="Lotus School Logo" className="h-24 w-auto object-contain mr-3" />
+            <img src={logo} alt="Edify Logo" className="h-24 w-auto object-contain mr-3" />
           </div>
         </div>
         
