@@ -14,11 +14,11 @@ const ReceiptHeader = memo(({ headerTitle }) => {
             className="h-[14.5mm] w-auto object-contain object-left"
           />
           <div className="flex flex-col justify-center min-w-0 pr-2">
-            <h1 className="text-[15px] font-black text-[#013e8b] leading-[1.1]" style={{ fontFamily: 'Arial Black, Impact, sans-serif' }}>LOTUS</h1>
-            <h2 className="text-[11px] font-bold text-[#b89531] leading-[1.1]">Nursery & Primary School</h2>
+            <h1 className="text-[13px] font-black text-[#013e8b] leading-[1.1] whitespace-nowrap" style={{ fontFamily: 'Arial Black, Impact, sans-serif' }}>STANFORD PARK</h1>
+            <h2 className="text-[10.5px] font-bold text-[#b89531] leading-[1.1] whitespace-nowrap">EDIFY SCHOOL</h2>
             <div className="h-[0.5px] w-full bg-[#00a2e8] my-[1px]"></div>
-            <p className="text-[8px] text-[#00a2e8] font-medium leading-[1.2] whitespace-nowrap">#20/16, Mariyamman Koil St,</p>
-            <p className="text-[8px] text-[#00a2e8] font-medium leading-[1.2] whitespace-nowrap">Kagithapattarai, Vellore.</p>
+            <p className="text-[6.5px] text-[#00a2e8] font-medium leading-[1.2] whitespace-nowrap">1ST WEST CROSS ROAD,</p>
+            <p className="text-[6.5px] text-[#00a2e8] font-medium leading-[1.2] whitespace-nowrap">GANDHI NAGAR(WEST) VELLORE-632006</p>
           </div>
         </div>
 

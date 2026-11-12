@@ -23,6 +23,7 @@ const PendingFees = lazy(() => import('./pages/PendingFees'));
 const AcademicYearPage = lazy(() => import('./pages/AcademicYear'));
 const Concessions = lazy(() => import('./pages/Concessions'));
 const IdCards = lazy(() => import('./pages/IdCards'));
+const ProgressCards = lazy(() => import('./pages/ProgressCards'));
 const PaymentHistory = lazy(() => import('./pages/PaymentHistory'));
 const Accounts = lazy(() => import('./pages/Accounts'));
 
@@ -78,6 +79,7 @@ const App = () => {
           <Route path="teachers" element={<Teachers />} />
           <Route path="print-export" element={<PrintExport />} />
           <Route path="id-cards" element={<IdCards />} />
+          <Route path="progress-cards" element={<ProgressCards />} />
           <Route path="concessions" element={<Concessions />} />
           <Route
             path="accounts"

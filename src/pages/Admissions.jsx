@@ -1150,7 +1150,7 @@ const Admissions = () => {
         )}
       </Modal>
 
-      <Modal isOpen={isManualModalOpen} onClose={() => setIsManualModalOpen(false)} title="LOTUS NURSERY & PRIMARY SCHOOL APPLICATION FORM" className="max-w-4xl">
+      <Modal isOpen={isManualModalOpen} onClose={() => setIsManualModalOpen(false)} title="STANFORD PARK EDIFY SCHOOL APPLICATION FORM" className="max-w-4xl">
         <form onSubmit={handleManualSubmit} className="space-y-6 max-h-[75vh] overflow-y-auto pr-2">
           {manualForm.applicationId ? (
             <div className="bg-blue-50 p-3 rounded-md border border-blue-100 flex flex-col sm:flex-row sm:items-center justify-between sticky top-0 z-10 shadow-sm gap-2">
