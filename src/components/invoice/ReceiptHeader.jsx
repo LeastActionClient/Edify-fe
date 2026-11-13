@@ -22,9 +22,9 @@ const ReceiptHeader = memo(({ headerTitle }) => {
           </div>
         </div>
 
-        <div className="shrink-0 rounded-[14px] bg-[#E0F2FE] px-[14px] py-[4px] text-center shadow-sm border border-[#BAE6FD] ml-auto">
-          <div className="text-[11.3px] font-bold uppercase tracking-[0.08em] text-[#013e8b]">{line1}</div>
-          <div className="mt-0.5 text-[11.3px] font-bold uppercase tracking-[0.08em] text-[#013e8b]">{line2}</div>
+        <div className="shrink-0 flex flex-col items-center justify-center rounded-[10px] bg-[#E0F2FE] px-[9px] py-[3px] text-center shadow-sm border border-[#BAE6FD] ml-auto">
+          <div className="text-[9.5px] font-bold uppercase tracking-[0.06em] text-[#013e8b] leading-[1.2]">{line1}</div>
+          <div className="mt-0.5 text-[9.5px] font-bold uppercase tracking-[0.06em] text-[#013e8b] leading-[1.2]">{line2}</div>
         </div>
       </div>
     </header>
