@@ -373,7 +373,7 @@ const Applications = () => {
         </CardContent>
       </Card>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="LOTUS NURSERY & PRIMARY SCHOOL APPLICATION FORM" className="max-w-4xl">
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="STANFORD PARK EDIFY SCHOOL APPLICATION FORM" className="max-w-4xl">
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           {/* Main Details */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

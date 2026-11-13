@@ -57,7 +57,7 @@ const Login = () => {
       <div className="hidden md:flex md:w-1/2 bg-gray-200">
         <img 
           src="/image-login.jpeg" 
-          alt="Lotus School Campus" 
+          alt="Stanford Park Edify School Campus" 
           className="w-full h-full object-cover object-center" 
         />
       </div>
