@@ -4,6 +4,7 @@ import api from '../services/api';
 import { Eye, EyeOff } from 'lucide-react';
 import logo from '../assets/edify logo.jpeg';
 import { Button } from '../components/ui/Button';
+import leftimage from '/edify.jpeg';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -56,7 +57,7 @@ const Login = () => {
     <div className="flex min-h-screen bg-gray-100 flex-col md:flex-row">
       <div className="hidden md:flex md:w-1/2 bg-gray-200">
         <img 
-          src="/image-login.jpeg" 
+          src={leftimage}
           alt="Stanford Park Edify School Campus" 
           className="w-full h-full object-cover object-center" 
         />
@@ -64,9 +65,9 @@ const Login = () => {
       
       <div className="w-full md:w-1/2 flex items-center justify-center bg-white p-8 lg:p-16">
         <div className="w-full max-w-md">
-        <div className="flex flex-col items-center justify-center mb-8">
+        <div className="flex flex-col items-center justify-center mb-2">
           <div className="flex items-center justify-center mb-2">
-            <img src={logo} alt="Edify Logo" className="h-24 w-auto object-contain mr-3" />
+            <img src={logo} alt="Edify Logo" className="h-64 w-auto object-contain mr-3" />
           </div>
         </div>
         
