@@ -42,6 +42,8 @@ const Applications = () => {
     guardianName: '',
     guardianPhone: '',
     feePaid: false,
+    paymentMethod: 'CASH',
+    referenceNumber: '',
     adminNo: ''
   });
   const { data: applications = [], isLoading: applicationsLoading } = useApplicationsQuery();
@@ -155,6 +157,8 @@ const Applications = () => {
         guardianName: '',
         guardianPhone: '',
         feePaid: false,
+        paymentMethod: 'CASH',
+        referenceNumber: '',
         adminNo: ''
       });
       invalidateApplications();
@@ -451,6 +455,38 @@ const Applications = () => {
             />
             <Label htmlFor="feePaid" className="text-sm font-medium text-gray-700 cursor-pointer select-none">Application Fee Paid</Label>
           </div>
+
+          {formData.feePaid && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3 bg-gray-50 rounded-lg border border-gray-200 mt-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="paymentMethod" className="text-xs font-semibold text-gray-700">Payment Method</Label>
+                <select
+                  id="paymentMethod"
+                  name="paymentMethod"
+                  value={formData.paymentMethod || 'CASH'}
+                  onChange={handleInputChange}
+                  className="flex h-9 w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
+                >
+                  <option value="CASH">Cash</option>
+                  <option value="ONLINE">Online / UPI</option>
+                  <option value="CHEQUE">Cheque</option>
+                  <option value="BANK_TRANSFER">Bank Transfer</option>
+                  <option value="CARD">Card</option>
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="referenceNumber" className="text-xs font-semibold text-gray-700">Reference Number (Optional)</Label>
+                <Input
+                  id="referenceNumber"
+                  name="referenceNumber"
+                  value={formData.referenceNumber || ''}
+                  onChange={handleInputChange}
+                  placeholder="e.g. UPI / Cheque Ref No"
+                  className="h-9"
+                />
+              </div>
+            </div>
+          )}
 
           <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 mt-6">
             <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>
