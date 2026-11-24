@@ -24,6 +24,7 @@ const AcademicYearPage = lazy(() => import('./pages/AcademicYear'));
 const Concessions = lazy(() => import('./pages/Concessions'));
 const IdCards = lazy(() => import('./pages/IdCards'));
 const ProgressCards = lazy(() => import('./pages/ProgressCards'));
+const BonafideCertificate = lazy(() => import('./pages/BonafideCertificate'));
 const PaymentHistory = lazy(() => import('./pages/PaymentHistory'));
 const Accounts = lazy(() => import('./pages/Accounts'));
 const Timetable = lazy(() => import('./pages/Timetable'));
@@ -83,6 +84,7 @@ const App = () => {
           <Route path="print-export" element={<PrintExport />} />
           <Route path="id-cards" element={<IdCards />} />
           <Route path="progress-cards" element={<ProgressCards />} />
+          <Route path="bonafide" element={<BonafideCertificate />} />
           <Route path="concessions" element={<Concessions />} />
           <Route
             path="accounts"
