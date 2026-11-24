@@ -373,105 +373,11 @@ const BonafideCertificate = () => {
     }
   };
 
-  // High Quality Native & Cross-Browser Print
-  const handlePrint = async () => {
-    const exportEl = pdfExportRef.current || certificateRef.current;
-    if (!exportEl) {
-      toastError('Certificate element not available for printing.');
-      return;
-    }
-
+  // Native High-Quality A4 Landscape Print (Triggers Chrome print directly with exact A4 landscape CSS)
+  const handlePrint = () => {
     try {
       setPrintingCert(true);
-
-      const images = Array.from(exportEl.querySelectorAll('img'));
-      await Promise.all(
-        images.map(img => (img.complete && img.naturalWidth > 0 ? Promise.resolve() : new Promise(res => {
-          img.onload = res;
-          img.onerror = res;
-          setTimeout(res, 2000);
-        })))
-      );
-
-      const targetHtml = exportEl.innerHTML;
-
-      const printWindow = window.open('', '_blank', 'width=1120,height=800');
-      if (!printWindow) {
-        // Fallback to window.print if popup blocked
-        window.print();
-        setPrintingCert(false);
-        return;
-      }
-
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>Bonafide Certificate - ${certData.studentName || 'Stanford Park'}</title>
-            <link rel="preconnect" href="https://fonts.googleapis.com">
-            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-            <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&display=swap" rel="stylesheet">
-            <style>
-              @page {
-                size: A4 landscape;
-                margin: 0;
-              }
-              * {
-                box-sizing: border-box;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-              html, body {
-                margin: 0 !important;
-                padding: 0 !important;
-                background: #ffffff !important;
-                width: 297mm;
-                height: 210mm;
-                overflow: hidden;
-              }
-              .bonafide-certificate-page {
-                width: 297mm !important;
-                height: 210mm !important;
-                max-width: 297mm !important;
-                max-height: 210mm !important;
-                box-sizing: border-box !important;
-                margin: 0 !important;
-                padding: 10mm 15mm 10mm 15mm !important;
-                display: flex !important;
-                flex-direction: column !important;
-                justify-content: space-between !important;
-                overflow: hidden !important;
-              }
-            </style>
-          </head>
-          <body>
-            <div class="bonafide-certificate-page">
-              ${targetHtml}
-            </div>
-            <script>
-              window.onload = function() {
-                const imgs = Array.from(document.images);
-                Promise.all(imgs.map(function(img) {
-                  return img.complete ? Promise.resolve() : new Promise(function(r) {
-                    img.onload = r;
-                    img.onerror = r;
-                    setTimeout(r, 2000);
-                  });
-                })).then(function() {
-                  setTimeout(function() {
-                    window.focus();
-                    window.print();
-                    window.close();
-                  }, 400);
-                });
-              };
-            </script>
-          </body>
-        </html>
-      `);
-
-      printWindow.document.close();
+      window.print();
 
       // Auto-save record
       if (selectedStudentId) {
@@ -503,17 +409,21 @@ const BonafideCertificate = () => {
   }
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="bonafide-page-container">
       {/* Print Specific CSS to isolate certificate */}
       <style>{`
+        @page {
+          size: A4 landscape;
+          margin: 0;
+        }
+
         @media print {
-          @page {
-            size: A4 landscape;
-            margin: 0;
-          }
-          html, body {
+          html,
+          body {
             width: 297mm !important;
             height: 210mm !important;
+            min-width: 297mm !important;
+            min-height: 210mm !important;
             margin: 0 !important;
             padding: 0 !important;
             background: #ffffff !important;
@@ -521,32 +431,62 @@ const BonafideCertificate = () => {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
-          body * {
-            visibility: hidden !important;
+
+          /* Hide application dashboard shell elements, screen controls, toasts and floating overlays */
+          .dashboard-sidebar,
+          .dashboard-mobile-header,
+          .no-print,
+          .bonafide-screen-only,
+          [role="status"],
+          [aria-live="polite"],
+          .fixed.right-4.top-4 {
+            display: none !important;
           }
-          .print-direct-certificate, .print-direct-certificate * {
-            visibility: visible !important;
-          }
-          .print-direct-certificate {
+
+          /* Flatten dashboard layout hierarchy for print */
+          .dashboard-shell,
+          .dashboard-shell > div,
+          .dashboard-main,
+          .dashboard-content-inner,
+          .bonafide-page-container {
             display: block !important;
-            position: fixed !important;
-            left: 0 !important;
-            top: 0 !important;
+            height: auto !important;
+            min-height: 0 !important;
+            overflow: visible !important;
+            background: #ffffff !important;
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+
+          /* Show only the high-fidelity print certificate */
+          .bonafide-print-only {
+            display: block !important;
             width: 297mm !important;
             height: 210mm !important;
+            max-width: 297mm !important;
+            max-height: 210mm !important;
             margin: 0 !important;
             padding: 0 !important;
             background: #ffffff !important;
-            z-index: 999999 !important;
+            page-break-after: avoid !important;
+            break-after: avoid !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            overflow: hidden !important;
           }
-          .no-print {
+        }
+
+        @media screen {
+          .bonafide-print-only {
             display: none !important;
           }
         }
       `}</style>
 
-      {/* Top Banner & Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 no-print border-b border-gray-200 pb-5">
+      {/* Screen UI Wrapper */}
+      <div className="bonafide-screen-only space-y-6 pb-12">
+        {/* Top Banner & Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 no-print border-b border-gray-200 pb-5">
         <div>
           <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
             <span className="p-2.5 rounded-xl bg-blue-50 text-blue-700 shadow-xs border border-blue-100">
@@ -1176,6 +1116,7 @@ const BonafideCertificate = () => {
           </CardContent>
         </Card>
       )}
+      </div>
 
       {/* Dedicated Offscreen Container for PDF Export (Always unscaled 297mm x 210mm) */}
       <div
@@ -1199,8 +1140,8 @@ const BonafideCertificate = () => {
         />
       </div>
 
-      {/* Hidden Container for Direct In-Page Print Mode Isolation */}
-      <div className="print-direct-certificate hidden">
+      {/* Direct In-Page Print Mode Isolation Container (Exact 297mm x 210mm A4 Landscape) */}
+      <div className="bonafide-print-only">
         <BonafideCertificateCard
           certificateData={certData}
           isBlank={isBlankMode}

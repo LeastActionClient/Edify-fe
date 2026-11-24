@@ -66,7 +66,7 @@ export function ToastViewport() {
   }
 
   return (
-    <div className="fixed right-4 top-4 z-[100] flex w-[calc(100vw-2rem)] max-w-sm flex-col gap-3 sm:w-full">
+    <div className="fixed right-4 top-4 z-[100] flex w-[calc(100vw-2rem)] max-w-sm flex-col gap-3 sm:w-full no-print print:hidden">
       {toasts.map((toast, index) => {
         const styles = typeStyles[toast.type] || typeStyles.info;
 

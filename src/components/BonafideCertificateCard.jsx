@@ -6,7 +6,8 @@ import circleLogoBadge from '../assets/bonafide_circle_logo.png';
  * A4 Landscape Bonafide Certificate Component
  * Exact recreation of Stanford Park Edify Nursery & Primary School reference design.
  * Dimensions: 297mm x 210mm (Standard A4 Landscape).
- * All elements have dedicated positioning containers to prevent text overlapping in all renderers (DOM, PDF, Print).
+ * All elements use dedicated inline styles to ensure 100% rendering fidelity across
+ * Chrome Print Preview, Save as PDF, jsPDF export, and live application view.
  */
 const BonafideCertificateCard = forwardRef(({
   certificateData = {},
@@ -30,12 +31,10 @@ const BonafideCertificateCard = forwardRef(({
     additionalText = ''
   } = certificateData;
 
-  const activeLogo = logoType === 'circle' ? circleLogoBadge : schoolLogoCrest;
-
   return (
     <div
       ref={ref}
-      className={`bonafide-certificate-page bg-white text-black relative select-none box-border ${className}`}
+      className={`bonafide-certificate-page ${className}`}
       style={{
         width: '297mm',
         height: '210mm',
@@ -50,11 +49,13 @@ const BonafideCertificateCard = forwardRef(({
         justifyContent: 'space-between',
         WebkitPrintColorAdjust: 'exact',
         printColorAdjust: 'exact',
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        color: '#000000',
+        position: 'relative'
       }}
     >
-      {/* 1. TOP SCHOOL HEADER (Outside / Above the black border) */}
-      <div className="text-center shrink-0 mb-[2mm] pt-[1mm]">
+      {/* 1. TOP SCHOOL HEADER (Above black border) */}
+      <div style={{ textAlign: 'center', flexShrink: 0, marginBottom: '2mm', paddingTop: '1mm' }}>
         {/* School title in crimson red decorative serif font */}
         <div
           style={{
@@ -109,21 +110,51 @@ const BonafideCertificateCard = forwardRef(({
 
       {/* 2. MAIN CERTIFICATE BODY (Inside thin black border) */}
       <div
-        className="certificate-bordered-box relative flex-1 flex flex-col justify-between border-[1.5px] border-black p-[5mm_9mm_6mm_9mm] box-border"
+        className="certificate-bordered-box"
         style={{
-          boxSizing: 'border-box'
+          position: 'relative',
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          border: '1.5px solid #000000',
+          padding: '5mm 9mm 6mm 9mm',
+          boxSizing: 'border-box',
+          overflow: 'hidden'
         }}
       >
-        {/* Background Watermark Crest (Faint, non-interfering) */}
+        {/* Background Watermark Crest (Centered, constrained to 90mm x 90mm, non-interfering) */}
         <div
-          className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0 overflow-hidden"
-          style={{ opacity: 0.08 }}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            pointerEvents: 'none',
+            userSelect: 'none',
+            zIndex: 0,
+            overflow: 'hidden',
+            opacity: 0.08
+          }}
         >
           <svg
             viewBox="0 0 200 240"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
-            className="w-[100mm] h-[100mm] text-gray-800"
+            width="90mm"
+            height="90mm"
+            style={{
+              width: '90mm',
+              height: '90mm',
+              maxWidth: '90mm',
+              maxHeight: '90mm',
+              display: 'block',
+              color: '#1f2937'
+            }}
           >
             {/* Outer Shield Outline */}
             <path
@@ -158,37 +189,70 @@ const BonafideCertificateCard = forwardRef(({
         </div>
 
         {/* Certificate Inner Top: School Logo on Left + BONAFIDE CERTIFICATE Title */}
-        <div className="relative z-10 flex items-center justify-between mb-[3mm] min-h-[22mm]">
+        <div
+          style={{
+            position: 'relative',
+            zIndex: 10,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '3mm',
+            minHeight: '22mm'
+          }}
+        >
           {/* Upper-Left School Logo (Maintains exact aspect ratio, no stretching/cropping) */}
           <div
-            className="shrink-0 flex items-center justify-start"
-            style={{ width: '56mm', height: '22mm' }}
+            style={{
+              width: '56mm',
+              height: '22mm',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-start',
+              flexShrink: 0
+            }}
           >
             {logoType === 'circle' ? (
               <img
                 src={circleLogoBadge}
                 alt="School Logo Badge"
-                className="h-[21mm] w-[21mm] object-contain block drop-shadow-2xs rounded-full"
-                style={{ maxHeight: '21mm', maxWidth: '21mm' }}
+                style={{
+                  maxHeight: '21mm',
+                  maxWidth: '21mm',
+                  width: '21mm',
+                  height: '21mm',
+                  objectFit: 'contain',
+                  display: 'block',
+                  borderRadius: '50%'
+                }}
               />
             ) : (
               <img
                 src={schoolLogoCrest}
                 alt="Stanford Park Logo"
-                className="h-[20mm] w-auto max-w-[54mm] object-contain block drop-shadow-2xs"
-                style={{ maxHeight: '20mm', maxWidth: '54mm', objectFit: 'contain' }}
+                style={{
+                  maxHeight: '20mm',
+                  maxWidth: '54mm',
+                  width: 'auto',
+                  height: 'auto',
+                  objectFit: 'contain',
+                  display: 'block'
+                }}
               />
             )}
           </div>
 
           {/* Certificate Title (Centered horizontally across certificate) */}
-          <div className="flex-1 text-center -ml-[56mm]">
+          <div style={{ flex: 1, textAlign: 'center', marginLeft: '-56mm' }}>
             <h2
-              className="font-bold uppercase inline-block pb-[1.5px] border-b-[1.5px] border-black"
               style={{
+                display: 'inline-block',
                 fontSize: '22px',
+                fontWeight: 'bold',
+                textTransform: 'uppercase',
                 fontFamily: "'Times New Roman', Times, serif",
                 letterSpacing: '1.2px',
+                borderBottom: '1.5px solid #000000',
+                paddingBottom: '1.5px',
                 margin: 0
               }}
             >
@@ -199,26 +263,47 @@ const BonafideCertificateCard = forwardRef(({
 
         {/* Serial Number (Left) and Date (Right) Row */}
         <div
-          className="relative z-10 flex items-baseline justify-between text-[15px] mb-[6mm] px-[2mm]"
-          style={{ fontFamily: "'Times New Roman', Times, serif" }}
+          style={{
+            position: 'relative',
+            zIndex: 10,
+            display: 'flex',
+            alignItems: 'baseline',
+            justifyContent: 'space-between',
+            fontSize: '15px',
+            marginBottom: '5mm',
+            padding: '0 2mm',
+            fontFamily: "'Times New Roman', Times, serif"
+          }}
         >
           {/* Serial Number */}
-          <div className="flex items-baseline">
-            <span className="font-normal mr-1.5 whitespace-nowrap">Serial No.:</span>
+          <div style={{ display: 'flex', alignItems: 'baseline' }}>
+            <span style={{ fontWeight: 'normal', marginRight: '6px', whiteSpace: 'nowrap' }}>Serial No.:</span>
             <span
-              className="font-bold border-b border-black px-2 pb-[1px] min-w-[90px] inline-block text-center"
-              style={{ minWidth: '90px' }}
+              style={{
+                fontWeight: 'bold',
+                borderBottom: '1px solid #000000',
+                padding: '0 8px 1px 8px',
+                minWidth: '90px',
+                textAlign: 'center',
+                display: 'inline-block'
+              }}
             >
               {serialNo || '....................'}
             </span>
           </div>
 
           {/* Date */}
-          <div className="flex items-baseline">
-            <span className="font-normal mr-1.5 whitespace-nowrap">Date</span>
+          <div style={{ display: 'flex', alignItems: 'baseline' }}>
+            <span style={{ fontWeight: 'normal', marginRight: '6px', whiteSpace: 'nowrap' }}>Date</span>
             <span
-              className="font-bold border-b border-black px-2 pb-[1px] min-w-[95px] inline-block text-center"
-              style={{ minWidth: '95px' }}
+              style={{
+                fontWeight: 'bold',
+                borderBottom: '1px solid #000000',
+                padding: '0 8px 1px 8px',
+                minWidth: '95px',
+                textAlign: 'center',
+                display: 'inline-block'
+              }}
             >
               {date || '........................'}
             </span>
@@ -227,17 +312,29 @@ const BonafideCertificateCard = forwardRef(({
 
         {/* Certificate Paragraph Content with Dedicated Field Containers */}
         <div
-          className="relative z-10 px-[2mm] text-[16px] text-justify space-y-[4.5mm]"
           style={{
+            position: 'relative',
+            zIndex: 10,
+            padding: '0 2mm',
+            fontSize: '16px',
+            textAlign: 'justify',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '4.5mm',
             fontFamily: "'Times New Roman', Times, Georgia, serif"
           }}
         >
           {/* Line 1: This is to certify that Master/Miss. [Student Name] ____________________ */}
-          <div className="flex items-end w-full min-h-[32px]">
-            <span className="shrink-0 whitespace-pre">This is to certify that {salutation} </span>
+          <div style={{ display: 'flex', alignItems: 'flex-end', width: '100%', minHeight: '32px' }}>
+            <span style={{ whiteSpace: 'pre', flexShrink: 0 }}>This is to certify that {salutation} </span>
             <span
-              className="font-bold uppercase px-2 pb-[1px] border-b border-black inline-block text-left shrink-0"
               style={{
+                fontWeight: 'bold',
+                textTransform: 'uppercase',
+                padding: '0 8px 1px 8px',
+                borderBottom: '1px solid #000000',
+                display: 'inline-block',
+                flexShrink: 0,
                 minWidth: '220px',
                 letterSpacing: '0.6px',
                 whiteSpace: 'nowrap'
@@ -245,15 +342,20 @@ const BonafideCertificateCard = forwardRef(({
             >
               {!isBlank && studentName ? studentName : '\u00A0'}
             </span>
-            <span className="flex-1 border-b border-black h-0 mb-[1px]" />
+            <span style={{ flex: 1, borderBottom: '1px solid #000000', height: 0, marginBottom: '1px' }} />
           </div>
 
           {/* Line 2: son/daughter of Mr / Mrs [Father Name] ___________________ is/ was a */}
-          <div className="flex items-end w-full min-h-[32px]">
-            <span className="shrink-0 whitespace-pre">{relation} {parentSalutation} </span>
+          <div style={{ display: 'flex', alignItems: 'flex-end', width: '100%', minHeight: '32px' }}>
+            <span style={{ whiteSpace: 'pre', flexShrink: 0 }}>{relation} {parentSalutation} </span>
             <span
-              className="font-bold uppercase px-2 pb-[1px] border-b border-black inline-block text-left shrink-0"
               style={{
+                fontWeight: 'bold',
+                textTransform: 'uppercase',
+                padding: '0 8px 1px 8px',
+                borderBottom: '1px solid #000000',
+                display: 'inline-block',
+                flexShrink: 0,
                 minWidth: '240px',
                 letterSpacing: '0.4px',
                 whiteSpace: 'nowrap'
@@ -261,58 +363,74 @@ const BonafideCertificateCard = forwardRef(({
             >
               {!isBlank && parentName ? parentName : '\u00A0'}
             </span>
-            <span className="flex-1 border-b border-black h-0 mb-[1px]" />
-            <span className="shrink-0 whitespace-pre ml-2"> {verb}</span>
+            <span style={{ flex: 1, borderBottom: '1px solid #000000', height: 0, marginBottom: '1px' }} />
+            <span style={{ whiteSpace: 'pre', flexShrink: 0, marginLeft: '8px' }}> {verb}</span>
           </div>
 
           {/* Line 3: bonafide student of this school studying in Grade [Grade] _________ during the */}
-          <div className="flex items-end w-full min-h-[32px]">
-            <span className="shrink-0 whitespace-pre">bonafide student of this school {statusText} Grade </span>
+          <div style={{ display: 'flex', alignItems: 'flex-end', width: '100%', minHeight: '32px' }}>
+            <span style={{ whiteSpace: 'pre', flexShrink: 0 }}>bonafide student of this school {statusText} Grade </span>
             <span
-              className="font-bold uppercase px-2 pb-[1px] border-b border-black inline-block text-center shrink-0"
               style={{
+                fontWeight: 'bold',
+                textTransform: 'uppercase',
+                padding: '0 8px 1px 8px',
+                borderBottom: '1px solid #000000',
+                display: 'inline-block',
+                textAlign: 'center',
+                flexShrink: 0,
                 minWidth: '130px',
                 whiteSpace: 'nowrap'
               }}
             >
               {!isBlank && classGrade ? classGrade : '\u00A0'}
             </span>
-            <span className="flex-1 border-b border-black h-0 mb-[1px]" />
-            <span className="shrink-0 whitespace-pre ml-2">during the</span>
+            <span style={{ flex: 1, borderBottom: '1px solid #000000', height: 0, marginBottom: '1px' }} />
+            <span style={{ whiteSpace: 'pre', flexShrink: 0, marginLeft: '8px' }}>during the</span>
           </div>
 
           {/* Line 4: year [Academic Year] _____________. His/her date of birth according to the office */}
-          <div className="flex items-end w-full min-h-[32px]">
-            <span className="shrink-0 whitespace-pre">year </span>
+          <div style={{ display: 'flex', alignItems: 'flex-end', width: '100%', minHeight: '32px' }}>
+            <span style={{ whiteSpace: 'pre', flexShrink: 0 }}>year </span>
             <span
-              className="font-bold px-2 pb-[1px] border-b border-black inline-block text-center shrink-0"
               style={{
+                fontWeight: 'bold',
+                padding: '0 8px 1px 8px',
+                borderBottom: '1px solid #000000',
+                display: 'inline-block',
+                textAlign: 'center',
+                flexShrink: 0,
                 minWidth: '150px',
                 whiteSpace: 'nowrap'
               }}
             >
               {!isBlank && academicYear ? academicYear : '\u00A0'}
             </span>
-            <span className="flex-1 border-b border-black h-0 mb-[1px]" />
-            <span className="shrink-0 whitespace-pre ml-1">. His/her date of birth according to the office</span>
+            <span style={{ flex: 1, borderBottom: '1px solid #000000', height: 0, marginBottom: '1px' }} />
+            <span style={{ whiteSpace: 'pre', flexShrink: 0, marginLeft: '4px' }}>. His/her date of birth according to the office</span>
           </div>
 
           {/* Line 5: records is [DOB] ____________. (Optional Note) */}
-          <div className="flex items-end w-full min-h-[32px]">
-            <span className="shrink-0 whitespace-pre">records is </span>
+          <div style={{ display: 'flex', alignItems: 'flex-end', width: '100%', minHeight: '32px' }}>
+            <span style={{ whiteSpace: 'pre', flexShrink: 0 }}>records is </span>
             <span
-              className="font-bold px-2 pb-[1px] border-b border-black inline-block text-center shrink-0"
               style={{
+                fontWeight: 'bold',
+                padding: '0 8px 1px 8px',
+                borderBottom: '1px solid #000000',
+                display: 'inline-block',
+                textAlign: 'center',
+                flexShrink: 0,
                 minWidth: '150px',
                 whiteSpace: 'nowrap'
               }}
             >
               {!isBlank && dateOfBirth ? dateOfBirth : '\u00A0'}
             </span>
-            <span className="w-[120px] border-b border-black h-0 mb-[1px]" />
-            <span className="shrink-0">.</span>
+            <span style={{ width: '120px', borderBottom: '1px solid #000000', height: 0, marginBottom: '1px' }} />
+            <span style={{ flexShrink: 0 }}>.</span>
             {additionalText && (
-              <span className="ml-3 font-normal italic text-[14.5px] text-gray-700">
+              <span style={{ marginLeft: '12px', fontStyle: 'italic', fontSize: '14.5px', color: '#374151' }}>
                 ({additionalText})
               </span>
             )}
@@ -321,22 +439,29 @@ const BonafideCertificateCard = forwardRef(({
 
         {/* 3. SIGNATURE SECTION (Bottom) */}
         <div
-          className="relative z-10 flex items-end justify-between px-[6mm] pt-[14mm] pb-[3mm]"
-          style={{ fontFamily: "'Times New Roman', Times, serif" }}
+          style={{
+            position: 'relative',
+            zIndex: 10,
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'space-between',
+            padding: '12mm 6mm 2mm 6mm',
+            fontFamily: "'Times New Roman', Times, serif"
+          }}
         >
           {/* Facilitator (Left) */}
-          <div className="text-left">
-            <p className="text-[16px] font-normal tracking-wide m-0 p-0">
+          <div style={{ textAlign: 'left' }}>
+            <p style={{ fontSize: '16px', fontWeight: 'normal', letterSpacing: '0.5px', margin: 0, padding: 0 }}>
               Facilitator
             </p>
           </div>
 
           {/* Principal & (sign & seal) (Center / Right) */}
-          <div className="text-center mr-[38mm]">
-            <p className="text-[16px] font-normal tracking-wide m-0 p-0">
+          <div style={{ textAlign: 'center', marginRight: '38mm' }}>
+            <p style={{ fontSize: '16px', fontWeight: 'normal', letterSpacing: '0.5px', margin: 0, padding: 0 }}>
               Principal
             </p>
-            <p className="text-[12.5px] font-normal italic mt-[2px] text-gray-700 m-0 p-0">
+            <p style={{ fontSize: '12.5px', fontStyle: 'italic', color: '#4b5563', margin: '2px 0 0 0', padding: 0 }}>
               (sign & seal)
             </p>
           </div>
