@@ -71,6 +71,20 @@ const PRESET_CO_SCHOLASTIC_SUBJECTS = [
   'Art & Craft'
 ];
 
+const PRESET_EXTRA_CURRICULAR_SUBJECTS = [
+  'Yoga',
+  'Karate',
+  'Music',
+  'Dance',
+  'Chess',
+  'Abacus',
+  'Silambam',
+  'Skating',
+  'Swimming',
+  'Robotics',
+  'Drama'
+];
+
 const computeGradeFromMark = (mark, maxMarks = 100) => {
   if (mark === '' || mark === null || mark === undefined) return '';
   const num = parseFloat(mark);
@@ -529,7 +543,10 @@ const ProgressCards = () => {
         className: subjectModalClass,
         category: subjectModalCategory,
         name: newSubjectName.trim(),
-        maxMarks: subjectModalCategory === 'scholastic' ? Number(newSubjectMaxMarks) || 100 : 100
+        maxMarks:
+          subjectModalCategory === 'scholastic' || subjectModalCategory === 'extraCurricular'
+            ? Number(newSubjectMaxMarks) || 100
+            : 100
       });
       toastSuccess(`Subject "${newSubjectName.trim()}" added for Class ${subjectModalClass}`);
       setNewSubjectName('');
@@ -568,7 +585,10 @@ const ProgressCards = () => {
         category: subjectModalCategory,
         subjects: selectedPresets.map((name) => ({
           name,
-          maxMarks: subjectModalCategory === 'scholastic' ? 100 : 100
+          maxMarks:
+            subjectModalCategory === 'scholastic' || subjectModalCategory === 'extraCurricular'
+              ? 100
+              : 100
         }))
       });
       toastSuccess(res.data?.message || 'Selected subjects added!');
@@ -610,7 +630,10 @@ const ProgressCards = () => {
       setSavingSubject(true);
       await api.put(`/progress-cards/subjects/${subj._id}`, {
         name: editingSubjectName.trim(),
-        maxMarks: subj.category === 'scholastic' ? Number(editingSubjectMaxMarks) || 100 : 100
+        maxMarks:
+          subj.category === 'scholastic' || subj.category === 'extraCurricular'
+            ? Number(editingSubjectMaxMarks) || 100
+            : 100
       });
       toastSuccess('Subject updated across class & cards!');
       setEditingSubjectId(null);
@@ -715,7 +738,12 @@ const ProgressCards = () => {
 
   const buildEntryRows = (stuList, subjectObj, category) => {
     const rows = stuList.map((stu) => {
-      const list = category === 'scholastic' ? stu.scholastic || [] : stu.coScholastic || [];
+      const list =
+        category === 'scholastic'
+          ? stu.scholastic || []
+          : category === 'extraCurricular'
+          ? stu.extraCurricular || []
+          : stu.coScholastic || [];
       const found = list.find(
         (item) =>
           (item.subjectId && item.subjectId === subjectObj._id) ||
@@ -780,7 +808,7 @@ const ProgressCards = () => {
     setEntryRows((prev) => {
       const next = [...prev];
       const row = { ...next[idx], [field]: value };
-      if (field === 'mark' && entryCategory === 'scholastic') {
+      if (field === 'mark' && (entryCategory === 'scholastic' || entryCategory === 'extraCurricular')) {
         row.grade = computeGradeFromMark(value, maxMarks);
       }
       next[idx] = row;
@@ -869,6 +897,7 @@ const ProgressCards = () => {
         totalMarks: editingStudent.totalMarks,
         overallGrade: editingStudent.overallGrade,
         coScholastic: editingStudent.coScholastic,
+        extraCurricular: editingStudent.extraCurricular || [],
         selfAwareness: editingStudent.selfAwareness,
         teacherRemarks: editingStudent.teacherRemarks
       });
@@ -1179,16 +1208,26 @@ const ProgressCards = () => {
   // Summary of active subjects for selected year/class
   const activeScholasticCount = classSubjects.filter((s) => s.category === 'scholastic' && s.isActive).length;
   const activeCoScholasticCount = classSubjects.filter((s) => s.category === 'coScholastic' && s.isActive).length;
+  const activeExtraCurricularCount = classSubjects.filter((s) => s.category === 'extraCurricular' && s.isActive).length;
 
   const entryClassObj = classes.find((c) => c.name === entryClass);
   const entrySections = entryClassObj?.sections || [];
 
   const modalScholasticSubjects = modalSubjects.filter((s) => s.category === 'scholastic');
   const modalCoScholasticSubjects = modalSubjects.filter((s) => s.category === 'coScholastic');
+  const modalExtraCurricularSubjects = modalSubjects.filter((s) => s.category === 'extraCurricular');
   const displayedModalSubjects =
-    subjectModalCategory === 'scholastic' ? modalScholasticSubjects : modalCoScholasticSubjects;
+    subjectModalCategory === 'scholastic'
+      ? modalScholasticSubjects
+      : subjectModalCategory === 'extraCurricular'
+      ? modalExtraCurricularSubjects
+      : modalCoScholasticSubjects;
   const currentPresets =
-    subjectModalCategory === 'scholastic' ? PRESET_SCHOLASTIC_SUBJECTS : PRESET_CO_SCHOLASTIC_SUBJECTS;
+    subjectModalCategory === 'scholastic'
+      ? PRESET_SCHOLASTIC_SUBJECTS
+      : subjectModalCategory === 'extraCurricular'
+      ? PRESET_EXTRA_CURRICULAR_SUBJECTS
+      : PRESET_CO_SCHOLASTIC_SUBJECTS;
 
   return (
     <div className="space-y-6">
@@ -1362,7 +1401,7 @@ const ProgressCards = () => {
                 <BookOpen size={14} />
                 Subjects ({filterYear || 'Active'}{filterClass ? ` • Class ${filterClass}` : ''}):
               </span>
-              {activeScholasticCount === 0 && activeCoScholasticCount === 0 ? (
+              {activeScholasticCount === 0 && activeCoScholasticCount === 0 && activeExtraCurricularCount === 0 ? (
                 <span className="text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full font-medium border border-amber-200">
                   No centralized subjects configured yet
                 </span>
@@ -1373,6 +1412,9 @@ const ProgressCards = () => {
                   </span>
                   <span className="bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full font-semibold">
                     Co-Scholastic: {activeCoScholasticCount}
+                  </span>
+                  <span className="bg-purple-50 text-purple-700 px-2.5 py-0.5 rounded-full font-semibold">
+                    Extra-Curricular: {activeExtraCurricularCount}
                   </span>
                 </>
               )}
@@ -1754,13 +1796,27 @@ const ProgressCards = () => {
             >
               Co-Scholastic Subjects ({modalCoScholasticSubjects.filter((s) => s.isActive).length})
             </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSubjectModalCategory('extraCurricular');
+                setSelectedPresets([]);
+              }}
+              className={`px-4 py-2 text-sm font-bold border-b-2 transition-colors ${
+                subjectModalCategory === 'extraCurricular'
+                  ? 'border-[#00599c] text-[#00599c]'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Extra Curricular ({modalExtraCurricularSubjects.filter((s) => s.isActive).length})
+            </button>
           </div>
 
           {/* Quick Subject Selection */}
           <div className="border border-blue-100 bg-blue-50/40 rounded-lg p-3.5 space-y-2.5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-xs font-bold text-[#00599c] uppercase">
-                Quick Select {subjectModalCategory === 'scholastic' ? 'Scholastic' : 'Co-Scholastic'} Subjects
+                Quick Select {subjectModalCategory === 'scholastic' ? 'Scholastic' : subjectModalCategory === 'extraCurricular' ? 'Extra-Curricular' : 'Co-Scholastic'} Subjects
               </span>
               {selectedPresets.length > 0 && (
                 <Button
@@ -1812,12 +1868,12 @@ const ProgressCards = () => {
             <div className="flex-1 w-full">
               <Label className="text-xs font-bold text-gray-600 mb-1 block">Add Custom Subject</Label>
               <Input
-                placeholder={`Enter ${subjectModalCategory === 'scholastic' ? 'Scholastic' : 'Co-Scholastic'} subject name...`}
+                placeholder={`Enter ${subjectModalCategory === 'scholastic' ? 'Scholastic' : subjectModalCategory === 'extraCurricular' ? 'Extra-Curricular' : 'Co-Scholastic'} subject name...`}
                 value={newSubjectName}
                 onChange={(e) => setNewSubjectName(e.target.value)}
               />
             </div>
-            {subjectModalCategory === 'scholastic' && (
+            {(subjectModalCategory === 'scholastic' || subjectModalCategory === 'extraCurricular') && (
               <div className="w-full sm:w-28">
                 <Label className="text-xs font-bold text-gray-600 mb-1 block">Max Marks</Label>
                 <Input
@@ -1850,7 +1906,7 @@ const ProgressCards = () => {
               <div className="p-8 text-center text-sm text-gray-500">Loading subjects...</div>
             ) : displayedModalSubjects.length === 0 ? (
               <div className="p-8 text-center text-sm text-gray-500">
-                No {subjectModalCategory === 'scholastic' ? 'scholastic' : 'co-scholastic'} subjects configured yet.
+                No {subjectModalCategory === 'scholastic' ? 'scholastic' : subjectModalCategory === 'extraCurricular' ? 'extra-curricular' : 'co-scholastic'} subjects configured yet.
                 Select from above or add a custom subject.
               </div>
             ) : (
@@ -1881,7 +1937,7 @@ const ProgressCards = () => {
                               onChange={(e) => setEditingSubjectName(e.target.value)}
                               className="h-8 text-sm"
                             />
-                            {subj.category === 'scholastic' && (
+                            {(subj.category === 'scholastic' || subj.category === 'extraCurricular') && (
                               <Input
                                 type="number"
                                 min={1}
@@ -1912,7 +1968,7 @@ const ProgressCards = () => {
                             <span className={`font-bold text-sm ${subj.isActive ? 'text-gray-900' : 'text-gray-500 line-through'}`}>
                               {subj.name}
                             </span>
-                            {subj.category === 'scholastic' && (
+                            {(subj.category === 'scholastic' || subj.category === 'extraCurricular') && (
                               <span className="ml-2 text-xs text-gray-500">(Max: {subj.maxMarks || 100})</span>
                             )}
                             {!subj.isActive && (
@@ -2075,6 +2131,7 @@ const ProgressCards = () => {
               >
                 <option value="scholastic">Scholastic</option>
                 <option value="coScholastic">Co-Scholastic</option>
+                <option value="extraCurricular">Extra-Curricular</option>
               </select>
             </div>
           </div>
@@ -2087,7 +2144,7 @@ const ProgressCards = () => {
             {entrySubjectsList.length === 0 ? (
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 flex justify-between items-center">
                 <span>
-                  No {entryCategory === 'scholastic' ? 'Scholastic' : 'Co-Scholastic'} subjects configured for Class {entryClass} ({entryYear}).
+                  No {entryCategory === 'scholastic' ? 'Scholastic' : entryCategory === 'extraCurricular' ? 'Extra-Curricular' : 'Co-Scholastic'} subjects configured for Class {entryClass} ({entryYear}).
                 </span>
                 <Button
                   size="sm"
@@ -2113,7 +2170,7 @@ const ProgressCards = () => {
               >
                 {entrySubjectsList.map((s) => (
                   <option key={s._id} value={s._id}>
-                    {s.name} {s.category === 'scholastic' ? `(Max Marks: ${s.maxMarks || 100})` : ''}
+                    {s.name} {(s.category === 'scholastic' || s.category === 'extraCurricular') ? `(Max Marks: ${s.maxMarks || 100})` : ''}
                   </option>
                 ))}
               </select>
@@ -2137,7 +2194,7 @@ const ProgressCards = () => {
                         <th className="py-2 px-3 text-left text-xs font-bold text-gray-600 w-10">#</th>
                         <th className="py-2 px-3 text-left text-xs font-bold text-gray-600">Adm No</th>
                         <th className="py-2 px-3 text-left text-xs font-bold text-gray-600">Student Name</th>
-                        {entryCategory === 'scholastic' && (
+                        {(entryCategory === 'scholastic' || entryCategory === 'extraCurricular') && (
                           <th className="py-2 px-3 text-center text-xs font-bold text-gray-600 w-28">Marks</th>
                         )}
                         <th className="py-2 px-3 text-center text-xs font-bold text-gray-600 w-28">Grade</th>
@@ -2152,7 +2209,7 @@ const ProgressCards = () => {
                             {row.studentName}
                             <span className="ml-1.5 text-xs text-gray-400">({row.currentClass}-{row.section})</span>
                           </td>
-                          {entryCategory === 'scholastic' && (
+                          {(entryCategory === 'scholastic' || entryCategory === 'extraCurricular') && (
                             <td className="py-1.5 px-3">
                               <Input
                                 type="number"
@@ -2460,6 +2517,73 @@ const ProgressCards = () => {
                           </option>
                         ))}
                       </select>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Extra-Curricular Activities & Marks */}
+            <div className="border border-gray-200 rounded-lg p-4 bg-white space-y-3">
+              <h3 className="font-bold text-sm text-[#00599c] uppercase">Extra-Curricular Activities</h3>
+              {(!editingStudent.extraCurricular || editingStudent.extraCurricular.length === 0) ? (
+                <div className="p-3 bg-gray-50 rounded text-xs text-gray-500">
+                  No extra-curricular activities configured for Class {editingStudent.currentClass}.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-12 gap-2 text-xs font-bold text-gray-600 px-2">
+                    <span className="col-span-6">Activity / Subject</span>
+                    <span className="col-span-3 text-center">Marks</span>
+                    <span className="col-span-3 text-center">Grade</span>
+                  </div>
+                  {editingStudent.extraCurricular.map((item, idx) => (
+                    <div key={item.subjectId || idx} className="grid grid-cols-12 gap-2 items-center p-2 bg-gray-50 rounded">
+                      <span className="col-span-6 text-xs font-bold text-gray-800 uppercase truncate">
+                        {item.subject}
+                        <span className="text-[10px] text-gray-400 font-normal ml-1">
+                          (Max: {item.maxMarks || 100})
+                        </span>
+                      </span>
+                      <div className="col-span-3">
+                        <Input
+                          type="number"
+                          className="h-8 text-center text-xs font-bold"
+                          placeholder="-"
+                          value={item.mark !== undefined && item.mark !== null ? item.mark : ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            const updated = { ...editingStudent };
+                            updated.extraCurricular = [...(updated.extraCurricular || [])];
+                            const current = { ...updated.extraCurricular[idx], mark: val };
+                            current.grade = computeGradeFromMark(val, item.maxMarks || 100);
+                            updated.extraCurricular[idx] = current;
+                            setEditingStudent(updated);
+                          }}
+                        />
+                      </div>
+                      <div className="col-span-3">
+                        <select
+                          className="w-full h-8 px-1 bg-white border border-gray-300 rounded-md text-center font-bold text-xs"
+                          value={item.grade || ''}
+                          onChange={(e) => {
+                            const updated = { ...editingStudent };
+                            updated.extraCurricular = [...(updated.extraCurricular || [])];
+                            updated.extraCurricular[idx] = {
+                              ...updated.extraCurricular[idx],
+                              grade: e.target.value
+                            };
+                            setEditingStudent(updated);
+                          }}
+                        >
+                          <option value="">-</option>
+                          {GRADE_OPTIONS.map((g) => (
+                            <option key={g} value={g}>
+                              {g}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
                   ))}
                 </div>

@@ -58,6 +58,7 @@ export const StudentProgressCard = React.forwardRef(({ student, printMode = fals
   const healthStatus = student.healthStatus || { bloodGroup: '', height: '', weight: '', dentalHygiene: '' };
   const scholastic = Array.isArray(student.scholastic) ? student.scholastic : [];
   const coScholastic = Array.isArray(student.coScholastic) ? student.coScholastic : [];
+  const extraCurricular = Array.isArray(student.extraCurricular) ? student.extraCurricular : [];
   const selfAwareness = student.selfAwareness || {
     goals: '',
     strengths: '',
@@ -828,6 +829,143 @@ export const StudentProgressCard = React.forwardRef(({ student, printMode = fals
                   </td>
                 </tr>
               ))
+            )}
+          </tbody>
+        </table>
+
+        {/* Extra - Curricular Table */}
+        <table
+          style={{
+            marginTop: '12px',
+            width: '100%',
+            borderCollapse: 'collapse',
+            fontSize: '11.5px',
+            border: borderGray,
+            tableLayout: 'fixed'
+          }}
+        >
+          <colgroup>
+            <col style={{ width: '34%' }} />
+            <col style={{ width: '33%' }} />
+            <col style={{ width: '33%' }} />
+          </colgroup>
+          <thead>
+            <tr>
+              <th
+                colSpan={3}
+                style={{
+                  backgroundColor: THEME_BLUE,
+                  color: '#ffffff',
+                  textAlign: 'left',
+                  padding: '6px 10px',
+                  fontWeight: 700,
+                  fontSize: '12px',
+                  border: borderBlue
+                }}
+              >
+                Extra - Curricular
+              </th>
+            </tr>
+            <tr style={{ backgroundColor: '#ffffff' }}>
+              <th
+                style={{
+                  width: '34%',
+                  padding: '6px 10px',
+                  fontWeight: 700,
+                  color: '#1e293b',
+                  textAlign: 'center',
+                  borderRight: borderGray,
+                  borderBottom: borderGray
+                }}
+              >
+                Subject
+              </th>
+              <th
+                style={{
+                  width: '33%',
+                  padding: '6px 10px',
+                  fontWeight: 700,
+                  color: '#1e293b',
+                  textAlign: 'center',
+                  borderRight: borderGray,
+                  borderBottom: borderGray
+                }}
+              >
+                {term}
+              </th>
+              <th
+                style={{
+                  width: '33%',
+                  padding: '6px 10px',
+                  fontWeight: 700,
+                  color: '#1e293b',
+                  textAlign: 'center',
+                  borderBottom: borderGray
+                }}
+              >
+                Grade
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {extraCurricular.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={3}
+                  style={{
+                    padding: '8px 10px',
+                    textAlign: 'center',
+                    color: '#64748b',
+                    fontStyle: 'italic'
+                  }}
+                >
+                  No extra-curricular activities configured for Class {currentClass} ({academicYear}).
+                </td>
+              </tr>
+            ) : (
+              extraCurricular.map((item, idx) => {
+                const hasMark = item.mark !== '' && item.mark !== null && item.mark !== undefined;
+                return (
+                  <tr key={item.subjectId || `${item.subject}-${idx}`} style={{ backgroundColor: '#ffffff' }}>
+                    <td
+                      style={{
+                        padding: '6px 10px',
+                        textAlign: 'center',
+                        fontWeight: 600,
+                        color: '#0f172a',
+                        textTransform: 'uppercase',
+                        borderRight: borderGray,
+                        borderBottom: idx === extraCurricular.length - 1 ? 'none' : borderGray
+                      }}
+                    >
+                      {item.subject}
+                    </td>
+                    <td
+                      style={{
+                        padding: '6px 10px',
+                        textAlign: 'center',
+                        fontWeight: 500,
+                        color: '#1e293b',
+                        borderRight: borderGray,
+                        borderBottom: idx === extraCurricular.length - 1 ? 'none' : borderGray
+                      }}
+                    >
+                      {hasMark ? item.mark : '-'}
+                    </td>
+                    <td
+                      style={{
+                        padding: '6px 10px',
+                        textAlign: 'center',
+                        fontWeight: 600,
+                        color: '#0f172a',
+                        borderBottom: idx === extraCurricular.length - 1 ? 'none' : borderGray
+                      }}
+                    >
+                      {item.grade || '-'}
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

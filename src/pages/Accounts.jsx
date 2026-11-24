@@ -58,6 +58,40 @@ const getTodayDateString = () => {
   return `${year}-${month}-${day}`;
 };
 
+const PAYMENT_MODES = [
+  { value: 'CASH', label: 'Cash' },
+  { value: 'UPI', label: 'UPI / Online' },
+  { value: 'BANK_TRANSFER', label: 'Bank Transfer' },
+  { value: 'CHEQUE', label: 'Cheque' },
+  { value: 'CARD', label: 'Card' },
+  { value: 'OTHER', label: 'Other' }
+];
+
+const formatPaymentMode = (mode) => {
+  if (!mode) return 'Cash';
+  const found = PAYMENT_MODES.find((m) => m.value === String(mode).toUpperCase());
+  return found ? found.label : String(mode);
+};
+
+const getPaymentModeBadgeClass = (mode) => {
+  const m = String(mode || 'CASH').toUpperCase();
+  switch (m) {
+    case 'CASH':
+      return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    case 'UPI':
+    case 'ONLINE':
+      return 'bg-blue-50 text-blue-700 border-blue-200';
+    case 'BANK_TRANSFER':
+      return 'bg-purple-50 text-purple-700 border-purple-200';
+    case 'CHEQUE':
+      return 'bg-amber-50 text-amber-700 border-amber-200';
+    case 'CARD':
+      return 'bg-indigo-50 text-indigo-700 border-indigo-200';
+    default:
+      return 'bg-gray-50 text-gray-700 border-gray-200';
+  }
+};
+
 const Accounts = () => {
   const navigate = useNavigate();
   const confirm = useConfirm();
@@ -94,18 +128,21 @@ const Accounts = () => {
   const [expenseForm, setExpenseForm] = useState({
     date: getTodayDateString(),
     notes: '',
-    amount: ''
+    amount: '',
+    paymentMode: 'CASH'
   });
   const [expenseFormErrors, setExpenseFormErrors] = useState({});
 
   // Date Filter State
   const [filterInputs, setFilterInputs] = useState({
     startDate: '',
-    endDate: ''
+    endDate: '',
+    paymentMode: ''
   });
   const [activeFilters, setActiveFilters] = useState({
     startDate: '',
-    endDate: ''
+    endDate: '',
+    paymentMode: ''
   });
   const [filterError, setFilterError] = useState('');
 
@@ -134,6 +171,7 @@ const Accounts = () => {
       const params = {};
       if (filters.startDate) params.startDate = filters.startDate;
       if (filters.endDate) params.endDate = filters.endDate;
+      if (filters.paymentMode) params.paymentMode = filters.paymentMode;
 
       const res = await api.get('/accounts', { params });
       const data = res.data;
@@ -175,7 +213,8 @@ const Accounts = () => {
     setExpenseForm({
       date: getTodayDateString(),
       notes: '',
-      amount: ''
+      amount: '',
+      paymentMode: 'CASH'
     });
     setExpenseFormErrors({});
     setIsAddExpenseModalOpen(true);
@@ -226,7 +265,8 @@ const Accounts = () => {
       const res = await api.post('/accounts/expenses', {
         date: expenseForm.date,
         notes: expenseForm.notes.trim(),
-        amount: Number(expenseForm.amount)
+        amount: Number(expenseForm.amount),
+        paymentMode: expenseForm.paymentMode || 'CASH'
       });
       toastSuccess(res.data.message || 'Expense added successfully');
       setIsAddExpenseModalOpen(false);
@@ -274,9 +314,9 @@ const Accounts = () => {
     if (e) e.preventDefault();
     setFilterError('');
 
-    const { startDate, endDate } = filterInputs;
+    const { startDate, endDate, paymentMode } = filterInputs;
 
-    if (!startDate && !endDate) {
+    if (!startDate && !endDate && !paymentMode) {
       return;
     }
 
@@ -292,7 +332,8 @@ const Accounts = () => {
 
     const newActiveFilters = {
       startDate: startDate || '',
-      endDate: endDate || ''
+      endDate: endDate || '',
+      paymentMode: paymentMode || ''
     };
 
     setActiveFilters(newActiveFilters);
@@ -303,7 +344,8 @@ const Accounts = () => {
   const handleClearFilters = async () => {
     const cleared = {
       startDate: '',
-      endDate: ''
+      endDate: '',
+      paymentMode: ''
     };
     setFilterInputs(cleared);
     setActiveFilters(cleared);
@@ -312,7 +354,7 @@ const Accounts = () => {
     await fetchAccountsData(cleared);
   };
 
-  const isFilterActive = Boolean(activeFilters.startDate || activeFilters.endDate);
+  const isFilterActive = Boolean(activeFilters.startDate || activeFilters.endDate || activeFilters.paymentMode);
 
   const isInitialLoading = isAccountsLoading && isOverviewLoading;
 
@@ -497,7 +539,7 @@ const Accounts = () => {
         </CardHeader>
         <CardContent className="pt-4">
           <form onSubmit={handleApplyFilters} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {/* Start Date */}
               <div>
                 <Label htmlFor="filter-start-date" className="text-xs font-semibold text-gray-700 mb-1.5 block">
@@ -530,6 +572,29 @@ const Accounts = () => {
                   }}
                   className="h-9 text-xs"
                 />
+              </div>
+
+              {/* Payment Mode */}
+              <div>
+                <Label htmlFor="filter-payment-mode" className="text-xs font-semibold text-gray-700 mb-1.5 block">
+                  Payment Mode
+                </Label>
+                <select
+                  id="filter-payment-mode"
+                  value={filterInputs.paymentMode}
+                  onChange={(e) => {
+                    setFilterInputs((prev) => ({ ...prev, paymentMode: e.target.value }));
+                    setFilterError('');
+                  }}
+                  className="flex h-9 w-full rounded-md border border-gray-300 bg-white px-3 py-1 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                >
+                  <option value="">All Payment Modes</option>
+                  {PAYMENT_MODES.map((pm) => (
+                    <option key={pm.value} value={pm.value}>
+                      {pm.label}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -622,10 +687,11 @@ const Accounts = () => {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-50/80">
-                    <TableHead className="w-[160px] font-semibold text-gray-700">Date</TableHead>
+                    <TableHead className="w-[140px] font-semibold text-gray-700">Date</TableHead>
                     <TableHead className="font-semibold text-gray-700">Notes / Description</TableHead>
-                    <TableHead className="text-right w-[180px] font-semibold text-gray-700">Amount</TableHead>
-                    <TableHead className="text-center w-[120px] font-semibold text-gray-700">Actions</TableHead>
+                    <TableHead className="w-[150px] font-semibold text-gray-700">Payment Mode</TableHead>
+                    <TableHead className="text-right w-[160px] font-semibold text-gray-700">Amount</TableHead>
+                    <TableHead className="text-center w-[100px] font-semibold text-gray-700">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -640,6 +706,11 @@ const Accounts = () => {
                       <TableCell className="text-gray-700 max-w-md">
                         <span className="line-clamp-2" title={expense.notes}>
                           {expense.notes}
+                        </span>
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getPaymentModeBadgeClass(expense.paymentMode)}`}>
+                          {formatPaymentMode(expense.paymentMode)}
                         </span>
                       </TableCell>
                       <TableCell className="text-right font-semibold text-gray-900 whitespace-nowrap">
@@ -731,33 +802,62 @@ const Accounts = () => {
             )}
           </div>
 
-          {/* Amount */}
-          <div>
-            <Label htmlFor="expense-amount" className="text-xs font-semibold text-gray-700 mb-1.5 block">
-              Amount (₹) <span className="text-red-500">*</span>
-            </Label>
-            <div className="relative rounded-md shadow-sm">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500 text-sm">
-                ₹
-              </span>
-              <Input
-                id="expense-amount"
-                type="number"
-                step="any"
-                min="0.01"
-                placeholder="e.g. 3500"
-                value={expenseForm.amount}
-                onChange={(e) => {
-                  setExpenseForm((prev) => ({ ...prev, amount: e.target.value }));
-                  setExpenseFormErrors((prev) => ({ ...prev, amount: '' }));
-                }}
-                className="pl-7 pr-3 text-sm"
-                required
-              />
+          {/* Amount and Payment Mode */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Amount */}
+            <div>
+              <Label htmlFor="expense-amount" className="text-xs font-semibold text-gray-700 mb-1.5 block">
+                Amount (₹) <span className="text-red-500">*</span>
+              </Label>
+              <div className="relative rounded-md shadow-sm">
+                <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500 text-sm">
+                  ₹
+                </span>
+                <Input
+                  id="expense-amount"
+                  type="number"
+                  step="any"
+                  min="0.01"
+                  placeholder="e.g. 3500"
+                  value={expenseForm.amount}
+                  onChange={(e) => {
+                    setExpenseForm((prev) => ({ ...prev, amount: e.target.value }));
+                    setExpenseFormErrors((prev) => ({ ...prev, amount: '' }));
+                  }}
+                  className="pl-7 pr-3 text-sm h-10"
+                  required
+                />
+              </div>
+              {expenseFormErrors.amount && (
+                <p className="mt-1 text-xs text-red-600 font-medium">{expenseFormErrors.amount}</p>
+              )}
             </div>
-            {expenseFormErrors.amount && (
-              <p className="mt-1 text-xs text-red-600 font-medium">{expenseFormErrors.amount}</p>
-            )}
+
+            {/* Payment Mode */}
+            <div>
+              <Label htmlFor="expense-payment-mode" className="text-xs font-semibold text-gray-700 mb-1.5 block">
+                Payment Mode <span className="text-red-500">*</span>
+              </Label>
+              <select
+                id="expense-payment-mode"
+                value={expenseForm.paymentMode}
+                onChange={(e) => {
+                  setExpenseForm((prev) => ({ ...prev, paymentMode: e.target.value }));
+                  setExpenseFormErrors((prev) => ({ ...prev, paymentMode: '' }));
+                }}
+                className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                required
+              >
+                {PAYMENT_MODES.map((pm) => (
+                  <option key={pm.value} value={pm.value}>
+                    {pm.label}
+                  </option>
+                ))}
+              </select>
+              {expenseFormErrors.paymentMode && (
+                <p className="mt-1 text-xs text-red-600 font-medium">{expenseFormErrors.paymentMode}</p>
+              )}
+            </div>
           </div>
 
           {/* Modal Actions */}
