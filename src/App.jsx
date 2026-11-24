@@ -26,6 +26,8 @@ const IdCards = lazy(() => import('./pages/IdCards'));
 const ProgressCards = lazy(() => import('./pages/ProgressCards'));
 const PaymentHistory = lazy(() => import('./pages/PaymentHistory'));
 const Accounts = lazy(() => import('./pages/Accounts'));
+const Timetable = lazy(() => import('./pages/Timetable'));
+
 
 const ProtectedRoute = ({ children }) => {
   const token = sessionStorage.getItem('token');
@@ -77,6 +79,7 @@ const App = () => {
           <Route path="reports" element={<Reports />} />
           <Route path="admins" element={<Admins />} />
           <Route path="teachers" element={<Teachers />} />
+          <Route path="timetable" element={<Timetable />} />
           <Route path="print-export" element={<PrintExport />} />
           <Route path="id-cards" element={<IdCards />} />
           <Route path="progress-cards" element={<ProgressCards />} />

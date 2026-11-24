@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 
-import { Home, Users, FileText, UserPlus, IndianRupee, FileCheck, PieChart, LogOut, Printer, Menu, X, Calendar, Percent, Contact, GraduationCap, Package, History, Wallet, Award } from 'lucide-react';
+import { Home, Users, FileText, UserPlus, IndianRupee, FileCheck, PieChart, LogOut, Printer, Menu, X, Calendar, Percent, Contact, GraduationCap, Package, History, Wallet, Award, CalendarRange } from 'lucide-react';
 
 
 import logo from '../assets/edify logo.jpeg';
@@ -61,6 +61,7 @@ const DashboardLayout = () => {
     { name: 'Progress Cards', path: '/dashboard/progress-cards', icon: <Award size={20} /> },
     { name: 'Academic Year', path: '/dashboard/academic-year', icon: <Calendar size={20} /> },
     { name: 'Teachers', path: '/dashboard/teachers', icon: <GraduationCap size={20} /> },
+    { name: 'Timetable', path: '/dashboard/timetable', icon: <CalendarRange size={20} /> },
     { name: 'Old Students', path: '/dashboard/old-students', icon: <Users size={20} /> },
     { name: 'Pending Fees', path: '/dashboard/pending-fees', icon: <IndianRupee size={20} /> },
     { name: 'Fee Categories', path: '/dashboard/fee-categories', icon: <FileCheck size={20} /> },
